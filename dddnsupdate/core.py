@@ -51,7 +51,7 @@ class DockerDDNS(object):
         try:
             KeyRing = dns.tsigkeyring.from_text(k)
         except:
-            print k, 'is not a valid key. The file should be in DNS KEY 
+            print k, 'is not a valid key. The file should be in DNS KEY \
                         record format. See dnssec-keygen(8)'
             exit()
 
