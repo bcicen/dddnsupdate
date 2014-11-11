@@ -1,6 +1,5 @@
 #!/usr/bin/python
 
-import docker
 import dns.update
 import dns.rdatatype
 import dns.query
@@ -41,12 +40,13 @@ class DockerDDNS(object):
             self.nsupdate(cid)
 
     def getkey(self,filename):
-        f = open(filename)
+        f = open(filename, 'r')
         keyfile = f.read().splitlines()
         f.close()
         hostname = keyfile[0].rsplit(' ')[1].replace('"', '').strip()
-        algo = keyfile[1].rsplit(' ')[1].replace(';','').replace('-','_').upper().strip()
-        key = keyfile[2].rsplit(' ')[1].replace('}','').replace(';','').replace('"', '').strip()
+        algo = keyfile[1].replace('algorithm', '').replace(' ', '').replace(';','').replace('-','_').upper().strip()
+        key = keyfile[2].replace('secret', '').replace(' ', '').replace(';','').replace('"','').strip()
+
         k = {hostname:key}
         try:
             KeyRing = dns.tsigkeyring.from_text(k)
@@ -74,15 +74,15 @@ class DockerDDNS(object):
 
         cname = str(cdic[key_path].strip('/').replace('_', ''))
         cip = str(cdic['NetworkSettings']['IPAddress'])
-
+        print(cip)
         if cip is not None:
-	    #instantiate updater for this transaction
+            #instantiate updater for this transaction
             updater = dns.update.Update(self.zone, keyring=self.kring,
                     keyalgorithm=getattr(dns.tsig, self.kalgo))
 
             updater.add(cname, 30, 'A', cip)
-	    try:
-                response = dns.query.tcp(updater, self.bind_server, source='10.0.0.50')
+            try:
+                response = dns.query.tcp(updater, self.bind_server)
             except dns.tsig.PeerBadKey:
                 print 'ERROR: The server is refusing our key'
                 exit()
