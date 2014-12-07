@@ -14,19 +14,19 @@ class DockerDDNS(object):
     """
     """
 
-    def __init__(self, api, bind_server, keyfile, zone):
+    def __init__(self, api, bind_server, configfile, zone):
         """
         Args:
             api: Docker Client instance used to do API communication
             bind_server: address of nameserver to update
-            keyfile: path to keyfile
+            configfile: path to configfile
             zone: zonename to update
         """
 
         self.api = api
         self.bind_server = bind_server
         self.zone = zone
-        self.kring, self.kalgo = self.getkey(keyfile)
+        self.zone, self.kring, self.kalgo = self.getkey(configfile)
 
         try:
             print('connected to docker instance running api version %s' % \
@@ -40,16 +40,14 @@ class DockerDDNS(object):
             self.nsupdate(cid)
 
     def getkey(self,filename):
-        f = open(filename, 'r')
-        keyfile = f.read().splitlines()
-        f.close()
-        hostname = keyfile[0].rsplit(' ')[1].replace('"', '').strip()
-        algo = keyfile[1].replace('algorithm', '').replace(' ', '').replace(';','').replace('-','_').upper().strip()
-        key = keyfile[2].replace('secret', '').replace(' ', '').replace(';','').replace('"','').strip()
+        from filename import dddnsconfig
+        zonename = dddnsconfig['zonename']
+        algo = dddnsconfig['algorithm']
+        key = dddnsconfig['secret']
 
-        k = {hostname:key}
+        k = {zonename:key}
         try:
-            KeyRing = dns.tsigkeyring.from_text(k)
+            keyring = dns.tsigkeyring.from_text(k)
         except:
             print k, 'is not a valid key. The file should be in DNS KEY \
                         record format. See dnssec-keygen(8)'
@@ -57,7 +55,7 @@ class DockerDDNS(object):
 
         print('using keyring as:')
         print(k)
-        return [KeyRing, algo]
+        return [zonename, keyring, algo]
 
     def nsupdate(self, cid):
         """
