@@ -25,7 +25,7 @@ def main():
 
     #simple validation
     if not args.configfile:
-        print('configfile must be specified')
+        print('--config must be specified')
         sys.exit(1)
 
     try:
@@ -37,8 +37,7 @@ def main():
     docker_client = docker.Client(base_url=args.docker_url,
             version=docker_api_version, timeout=10)
 
-    d_ddns = DockerDDNS(docker_client, args.bindhost,
-                        args.configfile)
+    d_ddns = DockerDDNS(docker_client, args.bindhost, args.configfile)
 
 if __name__ == '__main__':
     main()

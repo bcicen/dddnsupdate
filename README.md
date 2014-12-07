@@ -17,12 +17,14 @@ Usage
 
 The most typical use case is something like:
 ```
-dddnsupdate --keyfile bind.key --zonename docker.mydomain.org --bindhost 1.2.3.4 --dockerurl tcp://1.2.3.5:4243
+dddnsupdate --configfile ddnsconfigfile --bindhost 1.2.3.4 --dockerurl tcp://1.2.3.5:4243
 ```
-where bind.key is a TSIG format key like so:
+
+Where configfile is a file containing:
 ```
-key "docker.mydomain.org" {
-    algorithm HMAC-SHA512;
-    secret "<secret hash"";
-};
+{ 
+  "zonename": "docker.mydomain.org.",
+  "algorithm": "HMAC-SHA512",
+  "secret": "<secret hash>"
+}
 ```

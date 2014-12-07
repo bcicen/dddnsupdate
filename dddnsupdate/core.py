@@ -1,5 +1,6 @@
 #!/usr/bin/python
 
+import os, json
 import dns.update
 import dns.rdatatype
 import dns.query
@@ -14,7 +15,7 @@ class DockerDDNS(object):
     """
     """
 
-    def __init__(self, api, bind_server, configfile, zone):
+    def __init__(self, api, bind_server, configfile):
         """
         Args:
             api: Docker Client instance used to do API communication
@@ -25,7 +26,6 @@ class DockerDDNS(object):
 
         self.api = api
         self.bind_server = bind_server
-        self.zone = zone
         self.zone, self.kring, self.kalgo = self.getkey(configfile)
 
         try:
@@ -40,9 +40,11 @@ class DockerDDNS(object):
             self.nsupdate(cid)
 
     def getkey(self,filename):
-        from filename import dddnsconfig
+        of = open(filename, 'r')
+        dddnsconfig = json.load(of)
+        of.close()
         zonename = dddnsconfig['zonename']
-        algo = dddnsconfig['algorithm']
+        algo = dddnsconfig['algorithm'].replace('-','_')
         key = dddnsconfig['secret']
 
         k = {zonename:key}
