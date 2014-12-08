@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-import os, json
+import os, json, logging
 import dns.update
 import dns.rdatatype
 import dns.query
@@ -11,31 +11,32 @@ from dns.exception import DNSException, SyntaxError
 
 from warnings import warn
 
-class DockerDDNS(object):
-    """
-    """
+logging.basicConfig(level=logging.INFO)
 
+class DockerDDNS(object):
     def __init__(self, api, bind_server, configfile):
         """
         Args:
-            api: Docker Client instance used to do API communication
+            api: Docker API Client instance
             bind_server: address of nameserver to update
             configfile: path to configfile
             zone: zonename to update
         """
 
+        self.log = logging.getLogger()
         self.api = api
         self.bind_server = bind_server
         self.zone, self.kring, self.kalgo = self.getkey(configfile)
 
         try:
-            print('connected to docker instance running api version %s' % \
-                    self.api.version()['ApiVersion'])
+            self.log.debug('connected to docker instance at %s running api version %s' % \
+                    (self.api.base_url, self.api.version()['ApiVersion']))
         except docker.errors.APIError as ex:
             raise Exception(ex)
 
         cid_all = [ c['Id'] for c in self.api.containers() ]
-	print('%s active containers' % len(cid_all))
+        self.log.info('%s running containers discovered at host %s' % \
+                (len(cid_all), self.api.base_url))
         for cid in cid_all:
             self.nsupdate(cid)
 
@@ -50,17 +51,17 @@ class DockerDDNS(object):
         k = {zonename:key}
         try:
             keyring = dns.tsigkeyring.from_text(k)
-        except:
-            print k, 'is not a valid key. The file should be in DNS KEY \
-                        record format. See dnssec-keygen(8)'
-            exit()
+        except :
+            self.log.critical('Unable to create tsig keyring. The provided parameters should be \
+                        taken from DNS KEY record format. See dnssec-keygen(8)')
 
-        print('using keyring as:')
-        print(k)
+        self.log.debug('created tsig keyring as: %s' % json.dumps(k))
         return [zonename, keyring, algo]
 
     def nsupdate(self, cid):
         """
+        Args:
+            cid: container ID to inspect and add to configured dns zone
         """
         key_path = 'Name'
 
@@ -72,9 +73,8 @@ class DockerDDNS(object):
                 warn(ex)
             return None
 
-        cname = str(cdic[key_path].strip('/').replace('_', ''))
+        cname = str(cdic[key_path].strip('/').replace('_', '-'))
         cip = str(cdic['NetworkSettings']['IPAddress'])
-        print(cip)
         if cip is not None:
             #instantiate updater for this transaction
             updater = dns.update.Update(self.zone, keyring=self.kring,
@@ -83,8 +83,8 @@ class DockerDDNS(object):
             updater.add(cname, 30, 'A', cip)
             try:
                 response = dns.query.tcp(updater, self.bind_server)
-            except dns.tsig.PeerBadKey:
-                print 'ERROR: The server is refusing our key'
-                exit()
-            print('Creating A record for %s with ip %s resulted in: %s' % 
+            except dns.tsig.PeerBadKey as ex:
+                self.log.critical('ERROR: The server is refusing our key')
+                self.log.critical(ex)
+            self.log.info('Updating record for container %s with IP %s: %s' % 
                     (cname, cip, dns.rcode.to_text(response.rcode())))
