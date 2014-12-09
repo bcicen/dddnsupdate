@@ -1,0 +1,5 @@
+{ 
+  "zonename": "docker.mydomain.org.",
+  "algorithm": "HMAC-SHA512",
+  "secret": "<secret hash>"
+}
