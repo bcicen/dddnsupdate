@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-import os, json, logging
+import os, json, logging, docker
 import dns.update
 import dns.rdatatype
 import dns.query
