@@ -1,17 +1,22 @@
 #!/bin/bash
 
-[ -z $BIND_HOST] && {
+[ -z "$BIND_HOST" ] && {
   echo "Env variable BIND_HOST must be set"
   exit 1 
 }
 
-[ -z $DOCKER_HOSTS ] && {
+[ -z "$DOCKER_HOSTS" ] && {
   echo "Env variable DOCKER_HOSTS must be set"
   exit 1 
 }
 
-[ -z $UPDATE_INTERVAL ] && {
-    UPDATE_INTERVAL=60
+[ -z "$UPDATE_INTERVAL" ] && {
+  UPDATE_INTERVAL=60
+}
+
+[ ! -f /config ] && {
+  echo "/config not found, exiting"
+  exit 1
 }
 
 while :; do
