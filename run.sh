@@ -1,12 +1,14 @@
 #!/bin/bash
 
-[ -z "$BIND_HOST" ] && {
-  echo "Env variable BIND_HOST must be set"
+DOCKER_HOSTS=$@
+
+[ -z "$DOCKER_HOSTS" ] && {
+  echo "At least one docker host must be provided"
   exit 1 
 }
 
-[ -z "$DOCKER_HOSTS" ] && {
-  echo "Env variable DOCKER_HOSTS must be set"
+[ -z "$BIND_HOST" ] && {
+  echo "Env variable BIND_HOST must be set"
   exit 1 
 }
 
